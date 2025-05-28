@@ -45,13 +45,13 @@
       "type": "cpu",
       "key": "  cpu",
       "keyColor": "green",
-      "format": "{vendor} {name}",
+      "format": "{vendor~7,12} {name}",
     },
     {
       "type": "gpu",
       "key": "󰢮  gpu",
       "keyColor": "green",
-      "format": "{vendor} {name}",
+      "format": "{vendor} {name:20}",
     },
     {
       "type": "memory",
