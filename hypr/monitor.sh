@@ -15,13 +15,19 @@ case "$LS" in
   ACTIVE=$(hyprctl monitors -j | python3 -c \
     "import json,sys; ms=json.load(sys.stdin); print(next((m['name'] for m in ms if m['name']!='${LAPTOP_OUTPUT}'),''))")
   if [ -n "$ACTIVE" ]; then
-    hyprctl workspaces -j | python3 -c "
+    hyprctl workspaces -j | python3 - "$LAPTOP_OUTPUT" "$ACTIVE" <<'PYEOF'
 import json, sys, subprocess
+disabled, target = sys.argv[1], sys.argv[2]
 ws_list = json.load(sys.stdin)
 for ws in ws_list:
-    if ws.get('monitor','') in ('', '${LAPTOP_OUTPUT}'):
-        subprocess.run(['hyprctl','dispatch','moveworkspacetomonitor',str(ws['id']),'$ACTIVE'])
-"
+    if ws.get("monitor", "") in ("", disabled):
+        ws_id = str(ws["id"])
+        subprocess.run(
+            ["hyprctl", "eval",
+             f"hl.dispatch('moveworkspacetomonitor', '{ws_id} {target}')"],
+            check=False,
+        )
+PYEOF
   fi
   ;;
 *)

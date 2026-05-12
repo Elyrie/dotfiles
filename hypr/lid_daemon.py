@@ -43,8 +43,8 @@ def migrate_workspaces_from(output: str) -> None:
         if ws_monitor in ("", output):
             ws_id = ws["id"]
             subprocess.run(
-                ["hyprctl", "dispatch", "moveworkspacetomonitor",
-                 str(ws_id), target],
+                ["hyprctl", "eval",
+                 f"hl.dispatch('moveworkspacetomonitor', '{ws_id} {target}')"],
                 check=False,
             )
 
