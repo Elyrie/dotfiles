@@ -25,7 +25,7 @@ for ws in ws_list:
         ws_id = str(ws["id"])
         subprocess.run(
             ["hyprctl", "eval",
-             f"hl.dispatch('moveworkspacetomonitor', '{ws_id} {target}')"],
+             f"hl.dispatch(hl.dsp.workspace.move({{workspace = {ws_id}, monitor = '{target}'}})"],
             check=False,
         )
 PYEOF
