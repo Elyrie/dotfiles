@@ -10,7 +10,7 @@ LID_STATE_FILE="/proc/acpi/button/lid/LID/state"
 read -r LS <"$LID_STATE_FILE"
 
 case "$LS" in
-*open)   hyprctl reload; sleep 0.5; systemctl --user restart waybar.service ;;
+*open)   hyprctl reload ;;
 *closed)
   hyprctl eval "hl.monitor({output='${LAPTOP_OUTPUT}', disabled=true})"
   # Give Hyprland a moment, then migrate any orphaned workspaces to the
@@ -34,7 +34,7 @@ for ws in ws_list:
         )
 PYEOF
   fi
-  sleep 0.3; systemctl --user restart waybar.service
+
   ;;
 *)
   echo "Could not get lid state" >&2
