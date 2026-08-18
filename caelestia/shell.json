@@ -1,0 +1,56 @@
+{
+    "bar": {
+        "entries": [
+            {
+                "enabled": true,
+                "id": "logo"
+            },
+            {
+                "enabled": true,
+                "id": "workspaces"
+            },
+            {
+                "enabled": true,
+                "id": "spacer"
+            },
+            {
+                "enabled": true,
+                "id": "activeWindow"
+            },
+            {
+                "enabled": true,
+                "id": "spacer"
+            },
+            {
+                "enabled": true,
+                "id": "tray"
+            },
+            {
+                "enabled": true,
+                "id": "clock"
+            },
+            {
+                "enabled": true,
+                "id": "statusIcons"
+            },
+            {
+                "enabled": true,
+                "id": "power"
+            }
+        ],
+        "workspaces": {
+            "activeLabel": "",
+            "label": "",
+            "occupiedLabel": "",
+            "showWindows": false
+        }
+    },
+    "border": {
+        "rounding": 10
+    },
+    "services": {
+        "useFahrenheit": false,
+        "useTwelveHourClock": false,
+        "weatherLocation": "Jyväskylä"
+    }
+}

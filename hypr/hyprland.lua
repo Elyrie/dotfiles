@@ -26,11 +26,14 @@ hl.monitor({
 hl.monitor({ output = "DP-14", mode = "preferred", position = "0x0", scale = 1.0 })
 hl.monitor({ output = "DP-13", mode = "preferred", position = "0x0", scale = 1.0 })
 hl.monitor({ output = "DP-15", mode = "preferred", position = "0x0", scale = 1.0 })
+hl.monitor({ output = "DP-8", mode = "preferred", position = "0x0", scale = 1.0 })
+hl.monitor({ output = "HDMI-A-1", mode = "preferred", position = "0x0", scale = 1.0 })
 
 -- Right monitor: Dell U2415 (serial 7MT0169C3N7S)
 -- Known port aliases across reboots/upgrades: DP-11, DP-10
 hl.monitor({ output = "DP-11", mode = "preferred", position = "1920x0", scale = 1.0 })
 hl.monitor({ output = "DP-10", mode = "preferred", position = "1920x0", scale = 1.0 })
+hl.monitor({ output = "DP-2", mode = "preferred", position = "2560x0", scale = 1.0 })
 
 -- Fallback for any other output (e.g. unexpected dock ports)
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
@@ -42,7 +45,7 @@ hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" 
 -- Set programs that you use
 local terminal = "kitty"
 local fileManager = "dolphin"
-local menu = "hyprlauncher"
+local menu = "caelestia shell drawers toggle launcher"
 local browser = "firefox"
 
 -------------------
@@ -57,6 +60,9 @@ local browser = "firefox"
 hl.on("hyprland.start", function()
 	-- Set eDP-1 state based on physical lid position at startup
 	hl.exec_cmd("~/.config/hypr/scripts/monitor.sh")
+	-- Lockscreen and idle daemon
+	-- quickshell is managed by systemd (quickshell.service)
+	hl.exec_cmd("hypridle")
 end)
 
 -- Re-check lid state whenever a monitor is added (e.g. docking/undocking re-enables eDP-1)
@@ -110,8 +116,22 @@ hl.config({
 		border_size = 2,
 
 		col = {
-			active_border = { colors = { "rgba(33ccffee)", "rgba(00ff99ee)" }, angle = 45 },
-			inactive_border = "rgba(595959aa)",
+			-- Nord Aurora + Frost rainbow
+			active_border = {
+				colors = {
+					"rgba(BF616Aee)", -- nord11 red
+					"rgba(D08770ee)", -- nord12 orange
+					"rgba(EBCB8Bee)", -- nord13 yellow
+					"rgba(A3BE8Cee)", -- nord14 green
+					"rgba(8FBCBBee)", -- nord7  teal
+					"rgba(88C0D0ee)", -- nord8  cyan
+					"rgba(81A1C1ee)", -- nord9  blue
+					"rgba(5E81ACee)", -- nord10 indigo
+					"rgba(B48EADee)", -- nord15 purple
+				},
+				angle = 45,
+			},
+			inactive_border = "rgba(4C566Aaa)", -- nord3
 		},
 
 		-- Set to true to enable resizing windows by clicking and dragging on borders and gaps
@@ -124,7 +144,7 @@ hl.config({
 	},
 
 	decoration = {
-		rounding = 10,
+		rounding = 4,
 		rounding_power = 2,
 
 		-- Change transparency of focused and unfocused windows
@@ -269,25 +289,26 @@ local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal))
 local closeWindowBind = hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 -- closeWindowBind:set_enabled(false)
-hl.bind(
-	mainMod .. " + M",
-	hl.dsp.exec_cmd("~/.config/hypr/scripts/powermenu.sh")
-)
+hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("~/.config/hypr/scripts/powermenu.sh"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(menu))
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("hyprlauncher"))
-hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("hyprlock"))
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("caelestia shell drawers toggle launcher"))
+hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("caelestia shell lock lock"))
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("~/.config/hypr/scripts/powermenu.sh"))
 hl.bind(mainMod .. " + G", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- dwindle only
 -- Group/ungroup all windows in the active workspace
 hl.bind(mainMod .. " + T", function()
 	local ws = hl.get_active_workspace()
-	if not ws then return end
+	if not ws then
+		return
+	end
 	local wins = ws:get_windows()
-	if not wins or #wins == 0 then return end
+	if not wins or #wins == 0 then
+		return
+	end
 
 	-- If any window is already in a group → ungroup everything
 	for _, w in ipairs(wins) do
@@ -310,7 +331,9 @@ hl.bind(mainMod .. " + T", function()
 		local bx = b.at.x or 0
 		local ay = a.at.y or 0
 		local by = b.at.y or 0
-		if math.abs(ax - bx) > 10 then return ax < bx end
+		if math.abs(ax - bx) > 10 then
+			return ax < bx
+		end
 		return ay < by
 	end)
 
@@ -373,40 +396,58 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 -- Move current workspace to monitor in a given direction
 local function move_workspace_to_monitor(dir)
 	local active = hl.get_active_monitor()
-	if not active then return end
+	if not active then
+		return
+	end
 	local best, best_dist = nil, math.huge
 	for _, m in ipairs(hl.get_monitors()) do
 		if m.id ~= active.id then
 			local dx, dy = m.x - active.x, m.y - active.y
 			local match, dist = false, 0
-			if     dir == "l" and dx < 0 then match, dist = true, -dx
-			elseif dir == "r" and dx > 0 then match, dist = true,  dx
-			elseif dir == "u" and dy < 0 then match, dist = true, -dy
-			elseif dir == "d" and dy > 0 then match, dist = true,  dy
+			if dir == "l" and dx < 0 then
+				match, dist = true, -dx
+			elseif dir == "r" and dx > 0 then
+				match, dist = true, dx
+			elseif dir == "u" and dy < 0 then
+				match, dist = true, -dy
+			elseif dir == "d" and dy > 0 then
+				match, dist = true, dy
 			end
-			if match and dist < best_dist then best, best_dist = m, dist end
+			if match and dist < best_dist then
+				best, best_dist = m, dist
+			end
 		end
 	end
-	if best then hl.dispatch(hl.dsp.workspace.move({ monitor = best.name })) end
+	if best then
+		hl.dispatch(hl.dsp.workspace.move({ monitor = best.name }))
+	end
 end
 
 -- Move current workspace to another monitor
-hl.bind(mainMod .. " + CTRL + left",  function() move_workspace_to_monitor("l") end)
-hl.bind(mainMod .. " + CTRL + right", function() move_workspace_to_monitor("r") end)
-hl.bind(mainMod .. " + CTRL + up",    function() move_workspace_to_monitor("u") end)
-hl.bind(mainMod .. " + CTRL + down",  function() move_workspace_to_monitor("d") end)
+hl.bind(mainMod .. " + CTRL + left", function()
+	move_workspace_to_monitor("l")
+end)
+hl.bind(mainMod .. " + CTRL + right", function()
+	move_workspace_to_monitor("r")
+end)
+hl.bind(mainMod .. " + CTRL + up", function()
+	move_workspace_to_monitor("u")
+end)
+hl.bind(mainMod .. " + CTRL + down", function()
+	move_workspace_to_monitor("d")
+end)
 
 -- Resize active window with mainMod + SHIFT + arrow keys
 hl.bind(mainMod .. " + SHIFT + right", hl.dsp.window.move({ direction = "right" }))
-hl.bind(mainMod .. " + SHIFT + left",  hl.dsp.window.move({ direction = "left" }))
-hl.bind(mainMod .. " + SHIFT + up",    hl.dsp.window.move({ direction = "up" }))
-hl.bind(mainMod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "down" }))
+hl.bind(mainMod .. " + SHIFT + left", hl.dsp.window.move({ direction = "left" }))
+hl.bind(mainMod .. " + SHIFT + up", hl.dsp.window.move({ direction = "up" }))
+hl.bind(mainMod .. " + SHIFT + down", hl.dsp.window.move({ direction = "down" }))
 
 -- Resize active window with mainMod + ALT + arrow keys
-hl.bind(mainMod .. " + ALT + right", hl.dsp.window.resize({ x =  50, y =   0, relative = true }), { repeating = true })
-hl.bind(mainMod .. " + ALT + left",  hl.dsp.window.resize({ x = -50, y =   0, relative = true }), { repeating = true })
-hl.bind(mainMod .. " + ALT + up",    hl.dsp.window.resize({ x =   0, y = -50, relative = true }), { repeating = true })
-hl.bind(mainMod .. " + ALT + down",  hl.dsp.window.resize({ x =   0, y =  50, relative = true }), { repeating = true })
+hl.bind(mainMod .. " + ALT + right", hl.dsp.window.resize({ x = 50, y = 0, relative = true }), { repeating = true })
+hl.bind(mainMod .. " + ALT + left", hl.dsp.window.resize({ x = -50, y = 0, relative = true }), { repeating = true })
+hl.bind(mainMod .. " + ALT + up", hl.dsp.window.resize({ x = 0, y = -50, relative = true }), { repeating = true })
+hl.bind(mainMod .. " + ALT + down", hl.dsp.window.resize({ x = 0, y = 50, relative = true }), { repeating = true })
 
 -- Laptop multimedia keys for volume and LCD brightness
 hl.bind(
